@@ -7,7 +7,16 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [marks, setMarks] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState<number | null>(null);
+  const [probability, setProbability] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    category: "",
+    gender: "",
+    state: "",
+    pwd: ""
+  });
 
   // Load answer key
   const answerKey: { [key: string]: string } = {
@@ -141,6 +150,50 @@ export default function Home() {
     }
   };
 
+  const handleFormChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const calculateProbability = () => {
+    // Simple probability calculation based on marks and category
+    if (marks !== null) {
+      // Base probability is based on marks (out of 240)
+      let baseProbability = (marks / 240) * 100;
+      
+      // Adjust based on category (giving some advantage to reserved categories)
+      switch (formData.category) {
+        case "gen":
+          // No adjustment for general category
+          break;
+        case "ews":
+          baseProbability *= 1.05; // 5% advantage
+          break;
+        case "obc":
+          baseProbability *= 1.1; // 10% advantage
+          break;
+        case "sc":
+          baseProbability *= 1.15; // 15% advantage
+          break;
+        case "st":
+          baseProbability *= 1.2; // 20% advantage
+          break;
+      }
+      
+      // Adjust based on PWD status
+      if (formData.pwd === "yes") {
+        baseProbability *= 1.1; // 10% advantage for PWD
+      }
+      
+      // Ensure probability doesn't exceed 100%
+      const finalProbability = Math.min(baseProbability, 100);
+      setProbability(parseFloat(finalProbability.toFixed(2)));
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <div className="w-full max-w-md p-8 bg-white dark:bg-black rounded-lg shadow-lg">
@@ -246,6 +299,101 @@ export default function Home() {
                 Calculation: {correctCount} correct × 4 = {marks} marks
               </p>
             </div>
+          </div>
+        )}
+        
+        {/* Probability Form */}
+        {(marks !== null || probability !== null) && (
+          <div className="mt-6 p-6 bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700">
+            <h2 className="text-xl font-bold text-center text-gray-800 dark:text-gray-200 mb-4">
+              Probability Calculator
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleFormChange}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-white dark:bg-black dark:border-zinc-700 dark:text-white"
+                >
+                  <option value="">Select Category</option>
+                  <option value="gen">GEN</option>
+                  <option value="ews">EWS</option>
+                  <option value="obc">OBC</option>
+                  <option value="sc">SC</option>
+                  <option value="st">ST</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Gender
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleFormChange}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-white dark:bg-black dark:border-zinc-700 dark:text-white"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  State
+                </label>
+                <select
+                  name="state"
+                  value={formData.state}
+                  onChange={handleFormChange}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-white dark:bg-black dark:border-zinc-700 dark:text-white"
+                >
+                  <option value="">Select State</option>
+                  <option value="up">UP</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  PWD
+                </label>
+                <select
+                  name="pwd"
+                  value={formData.pwd}
+                  onChange={handleFormChange}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-white dark:bg-black dark:border-zinc-700 dark:text-white"
+                >
+                  <option value="">Select Option</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              
+              <button
+                onClick={calculateProbability}
+                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200"
+              >
+                Calculate Probability
+              </button>
+            </div>
+            
+            {/* Probability Result */}
+            {probability !== null && (
+              <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
+                <p className="text-lg font-bold">Your Admission Probability: {probability}%</p>
+                <p className="text-sm mt-2">
+                  Based on your marks and selected criteria
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
