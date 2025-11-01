@@ -73,6 +73,7 @@ export default function Home() {
             className="hidden"
             aria-label="File upload"
           />
+          {/* Added more logic */}
           <div className="flex flex-col items-center justify-center gap-3">
             <svg 
               className="w-10 h-10 text-gray-400 dark:text-zinc-500" 
